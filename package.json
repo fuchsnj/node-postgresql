@@ -1,0 +1,16 @@
+{
+  "name": "game-server",
+  "description": "description",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+	"bluebird": "2.2.2",
+	"pg": "3.4.0"
+  },
+  "devDependencies":{
+	"mocha": "1.21.3"
+  },
+  "scripts":{
+	"test": "mocha test.js"
+  }
+}
