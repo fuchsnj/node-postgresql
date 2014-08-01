@@ -14,7 +14,7 @@ var pg = require('pg');
 function PostgreSQL(config){
 	this.configString="postgres://"+config.user+":"+config.password+"@"+config.host+"/"+config.database;
 }
-PostgreSQL.prototype.query(var query,var params){
+PostgreSQL.prototype.query=function(query,params){
 	return new Promise(function(resolve,reject){
 		pg.connect(this.configString,function(err,client,done){
 			if(err){
@@ -32,7 +32,7 @@ PostgreSQL.prototype.query(var query,var params){
 		});
 	});
 }
-PostgreSQL.prototype.getConnection(func){
+PostgreSQL.prototype.getConnection=function(func){
 	return new Promise(function(resolve,reject){
 		pg.connect(this.configString,function(err,client,done){
 			if(err){
