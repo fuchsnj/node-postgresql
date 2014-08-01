@@ -1,5 +1,6 @@
 var Promise = require('bluebird');
 var pg = require('pg');
+var Connection = require("./connection.js");
 
 
 /*
@@ -12,19 +13,23 @@ var pg = require('pg');
 	}
  */
 function PostgreSQL(config){
-	this.configString="postgres://"+config.user+":"+config.password+"@"+config.host+"/"+config.database;
+	this.configString = "postgres://" + config.user + ":" + config.password + "@" + config.host + "/" + config.database;
 }
-PostgreSQL.prototype.query=function(query,params){
-	return new Promise(function(resolve,reject){
-		pg.connect(this.configString,function(err,client,done){
-			if(err){
+PostgreSQL.prototype.query = function (query,params) {
+	var self = this;
+	return new Promise(function (resolve,reject) {
+		console.log("Connecting to :" + self.configString);
+		pg.connect(self.configString,function (err,client,done) {
+			if (err){
 				reject(err);
-			}else{
-				client.query(query,params,function(err,result){
+			}
+			else {
+				client.query(query,params,function (err,result) {
 					done();
-					if(err){
+					if (err){
 						reject(err);
-					}else{
+					}
+					else {
 						resolve(result);
 					}
 				});
@@ -32,14 +37,22 @@ PostgreSQL.prototype.query=function(query,params){
 		});
 	});
 }
-PostgreSQL.prototype.getConnection=function(func){
-	return new Promise(function(resolve,reject){
-		pg.connect(this.configString,function(err,client,done){
-			if(err){
+PostgreSQL.prototype.getConnection = function (func) {
+	var self = this;
+	return new Promise(function (resolve,reject) {
+		pg.connect(self.configString,function (err,client,done) {
+			if (err){
 				reject(err);
-			}else{
-				return Promise.resolve(func(client))
-				.finally(function(){
+			}
+			else {
+				Promise.resolve(func(new Connection(client)))
+				.then(function(val){
+					resolve(val);
+				})
+				.catch(function(err){
+					reject(err);
+				})
+				.finally(function () {
 					done();//put the connection back in the pool
 				});
 			}
@@ -47,5 +60,4 @@ PostgreSQL.prototype.getConnection=function(func){
 	});
 }
 
-
-module.exports=PostgreSQL;
+module.exports = PostgreSQL;
