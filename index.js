@@ -18,7 +18,6 @@ function PostgreSQL(config){
 PostgreSQL.prototype.query = function (query,params) {
 	var self = this;
 	return new Promise(function (resolve,reject) {
-		console.log("Connecting to :" + self.configString);
 		pg.connect(self.configString,function (err,client,done) {
 			if (err){
 				reject(err);
