@@ -44,7 +44,8 @@ PostgreSQL.prototype.getConnection = function (func) {
 				reject(err);
 			}
 			else {
-				Promise.resolve(func(new Connection(client)))
+				var connection = new Connection(client);
+				Promise.resolve(func(connection))
 				.then(function(val){
 					resolve(val);
 				})
@@ -52,11 +53,20 @@ PostgreSQL.prototype.getConnection = function (func) {
 					reject(err);
 				})
 				.finally(function () {
-					done();//put the connection back in the pool
+					return connection.reset()
+					.then(function(){
+						done();//put the connection back in the pool
+					});
 				});
 			}
 		});
 	});
 }
-
+PostgreSQL.prototype.notify = function (channel, msg){
+	if(msg){
+		return this.query('notify "'+channel+'", \''+msg+'\'');
+	}else{
+		return this.query('notify "'+channel+'"');
+	}
+}
 module.exports = PostgreSQL;
