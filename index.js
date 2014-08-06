@@ -46,6 +46,7 @@ PostgreSQL.prototype.getConnection = function (func) {
 				var connection = new Connection(client);
 				Promise.resolve(func(connection))
 				.then(function (val) {
+
 					resolve(val);
 				})
 				.catch(function (err) {

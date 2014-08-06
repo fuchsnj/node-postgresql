@@ -52,9 +52,7 @@ Connection.prototype.notify = function (channel,msg){
 }
 Connection.prototype.reset = function (){
 	var self = this;
-	//console.log(this.client);
 	this.client.removeAllListeners();//remove event emitter
-
 	if (hasListener()){
 		return this.query("unlisten *");
 	}
