@@ -1,16 +1,19 @@
 var Promise = require("bluebird");
 
-function Connection(client){
+function Connection(client,done){
 	var self=this;
+	this.done = done;
 	this.client = client;
 	this.listeners = {};
+
+	//must queue tasks to prevent race condition between removing and adding a listener to the db
+	this.listenerQueue = Promise.resolve();
 	this.client.on("notification",function (msg) {
 		var array = self.listeners[msg.channel];
 		if(array){
 			for(var a=0; a<array.length; a++){
 				array[a](msg.payload);
 			}
-			delete self.listeners[msg.channel];
 		}
 	});
 }
@@ -27,21 +30,35 @@ Connection.prototype.query=function (query,params){
 		});
 	});
 }
-Connection.prototype.listen = function (channel){
+Connection.prototype.listen = function (channel,callback){
 	var self=this;
-	var promise1 = new Promise(function (resolve,reject){
+	self.listenerQueue = self.listenerQueue.then(function(){
 		if(self.listeners[channel]){
-			self.listeners[channel].push(resolve);
+			self.listeners[channel].push(callback);
 		}else{
-			self.listeners[channel] = [resolve];
+			self.listeners[channel] = [callback];
 		}
-		return 
+		return self.query('listen "'+channel+'"');
 	});
-	var promise2 = self.query('listen "'+channel+'"');
-	return {
-		notification: promise1,
-		started: promise2
-	};
+	return self.listenerQueue;
+}
+Connection.prototype.stopListening = function (channel,callback){
+	var self = this;
+	self.listenerQueue = self.listenerQueue.then(function(){
+		if(self.listeners[channel]){
+			//self.listeners[channel].push(callback);
+			var index = self.listeners[channel].indexOf(callback);
+			if(index !== -1){
+				self.listeners[channel].splice(index,1);
+				if(self.listeners[channel].length === 0){
+					delete self.listeners[channel];
+					return self.query('unlisten "'+ channel +'"');
+				}
+			}
+			return Promise.resolve();
+		}
+	});
+	return self.listenerQueue;
 }
 Connection.prototype.notify = function (channel,msg){
 	if(msg){
@@ -65,6 +82,10 @@ Connection.prototype.reset = function (){
 		}
 		return false;
 	}
+}
+Connection.prototype.end = function () {
+	this.reset();
+	this.done();
 }
 
 module.exports = Connection;
