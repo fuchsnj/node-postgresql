@@ -9,6 +9,7 @@ function Connection(client,done){
 	//must queue tasks to prevent race condition between removing and adding a listener to the db
 	this.listenerQueue = Promise.resolve();
 	this.client.on("notification",function (msg) {
+		console.log("notification received:",msg.channel);
 		var array = self.listeners[msg.channel];
 		if(array){
 			for(var a=0; a<array.length; a++){
@@ -21,6 +22,7 @@ Connection.prototype.query=function (query,params){
 	var self = this;
 	return new Promise(function (resolve,reject){
 		self.client.query(query,params,function (err,result){
+			console.log("connection query done");
 			if(err){
 				reject(err);
 			}
@@ -84,6 +86,7 @@ Connection.prototype.reset = function (){
 	}
 }
 Connection.prototype.end = function () {
+	console.log("END CONNECTION");
 	this.reset();
 	this.done();
 }

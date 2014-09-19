@@ -55,8 +55,15 @@ PostgreSQL.prototype.transaction = function (serial,func) {
 			return con.query("COMMIT");
 		})
 		.catch(function(err){
+			//TODO: if transaction error is because of serialization issue, redo
 			console.log("transaction error:",err);
-			return con.query("ROLLBACK");
+			return con.query("ROLLBACK")
+			.finally(function(){
+				throw err;
+			});
+		})
+		.finally(function(){
+			con.end();
 		});
 	});
 }
